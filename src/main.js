@@ -2,6 +2,7 @@ import './style.css';
 import { WalletService } from './services/wallet.service.js';
 import { TokenService } from './services/token.service.js';
 import { UIService } from './services/ui.service.js';
+import { userContext } from './context/userContext.js';
 
 class App {
   constructor() {
@@ -14,62 +15,68 @@ class App {
 
   async initializeApp() {
     this.setupEventListeners();
-    await this.updateBalances();
     this.initializeXumm();
   }
-
-  // initializeXumm() {
-  //   this.xumm.on('ready', async () => {
-  //     try {
-  //       const account = await this.xumm.user.account;
-  //       const token = await this.xumm.user.token;
-
-  //       console.log('XUMM user data:', account, token);
-        
-  //       // Update footer information
-  //       document.getElementById('user-account').textContent = this.formatAddress(account);
-  //       document.getElementById('user-token').textContent = this.formatToken(token);
-  //     } catch (error) {
-  //       console.error('Error fetching XUMM user data:', error);
-  //     }
-  //   });
-  // }
-
 
   initializeXumm() {
     this.xumm.on('ready', async () => {
       console.log('Xumm SDK is ready');
-      await this.fetchUserData(); // Fetch user data immediately when SDK is ready
+      try {
+        const account = await this.xumm.user.account;
+        const token = await this.xumm.user.token;
+
+        if (account && token) {
+          console.log('XUMM user account:', account);
+          console.log('XUMM user token:', token);
+
+          // Store in userContext
+          userContext.setAccount(account);
+          userContext.setToken(token);
+
+          // Update UI
+          document.getElementById('user-account').textContent = this.formatAddress(account);
+          document.getElementById('user-token').textContent = this.formatToken(token);
+
+          // Fetch balances
+          await this.updateBalances();
+        } else {
+          throw new Error('Account or token not available.');
+        }
+      } catch (error) {
+        console.error('Error fetching XUMM user data:', error);
+        document.getElementById('user-account').textContent = 'Failed to load account';
+        document.getElementById('user-token').textContent = 'Failed to load token';
+      }
     });
-  
+
     this.xumm.on('success', () => {
       console.log('User has successfully signed in');
-      this.fetchUserData(); // Refetch data if session is re-established
+      this.fetchUserData(); // Re-fetch data
     });
-  
+
     this.xumm.on('error', (error) => {
       console.error('Xumm SDK error:', error);
       document.getElementById('user-account').textContent = 'Error loading account';
       document.getElementById('user-token').textContent = 'Error loading token';
     });
   }
-  
+
   async fetchUserData() {
     try {
       const account = await this.xumm.user.account;
       const token = await this.xumm.user.token;
-  
+
       if (account && token) {
         console.log('XUMM user data:', account, token);
-  
+
+        // Store in userContext
+        userContext.setAccount(account);
+        userContext.setToken(token);
+
         // Update UI
         document.getElementById('user-account').textContent = this.formatAddress(account);
         document.getElementById('user-token').textContent = this.formatToken(token);
-  
-        // Store account and token
-        this.account = account;
-        this.token = token;
-  
+
         // Fetch balances
         await this.updateBalances();
       } else {
@@ -81,22 +88,26 @@ class App {
       document.getElementById('user-token').textContent = 'Failed to load token';
     }
   }
-  
+
   async updateBalances() {
     try {
-      const xrpBalance = await this.walletService.getXRPBalance(this.account, this.token);
-      const tokenBalance = await this.tokenService.getTokenBalance();
-  
+      const account = userContext.getAccount();
+      const token = userContext.getToken();
+
+      if (!account || !token) {
+        throw new Error('User account or token is missing.');
+      }
+
+      const xrpBalance = await this.walletService.getXRPBalance(account, token);
       document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
+
+      const tokenBalance = await this.tokenService.getTokenBalance();
       document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
     } catch (error) {
-      console.error('Failed to update balances:', error);
+      console.error('Error in updateBalances:', error.message);
       this.uiService.showError('Failed to update balances');
     }
   }
-  
-  
-  
 
   formatAddress(address) {
     if (!address) return 'Not connected';
@@ -128,27 +139,13 @@ class App {
       await this.handleSend(formData);
     });
 
-    // Currency Type Change
-    document.getElementById('currency-type').addEventListener('change', (e) => {
-      const feeNote = document.getElementById('fee-note');
-      feeNote.classList.toggle('hidden', e.target.value === 'xrp');
-    });
-
-    // Buy Form
+    // Other form listeners
     document.getElementById('buy-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const xrpAmount = parseFloat(document.getElementById('xrp-amount').value);
       await this.handleBuy(xrpAmount);
     });
 
-    // XRP Amount Change for Buy
-    document.getElementById('xrp-amount').addEventListener('input', (e) => {
-      const estimate = parseFloat(e.target.value) * 100;
-      document.getElementById('token-estimate').textContent = 
-        `Estimated tokens: ${estimate || 0}`;
-    });
-
-    // Retire Form
     document.getElementById('retire-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const amount = parseFloat(document.getElementById('retire-amount').value);
@@ -156,48 +153,26 @@ class App {
     });
   }
 
-  showSection(sectionId) {
-    // Update toggle buttons
-    document.querySelectorAll('.toggle-button').forEach(button => {
-      button.classList.toggle('active', button.dataset.section === sectionId);
-    });
-
-    // Update sections
-    document.querySelectorAll('.section').forEach(section => {
-      section.classList.toggle('active', section.id === `${sectionId}-section`);
-    });
-  }
-
   async handleSend(formData) {
     try {
-      if (formData.type === 'xrp') {
-        const account = await this.xumm.user.account; // Get Xumm account
-        const token = await this.xumm.user.token; // Get Xumm token
-  
-        const payload = await this.walletService.sendXRP(
-          account, // Sender
-          formData.recipient, // Recipient
-          formData.amount, // Amount
-          token // Bearer token
-        );
-  
-        // Open the payload in Xumm for signing
-        this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-  
-        this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
-      } else {
-        await this.tokenService.sendTokens(formData.recipient, formData.amount);
-        this.uiService.showSuccess(`Token transaction initiated.`);
-      }
-  
+      const account = userContext.getAccount();
+      const token = userContext.getToken();
+
+      const payload = await this.walletService.sendXRP(
+        account, // Sender
+        formData.recipient, // Recipient
+        formData.amount, // Amount
+        token // Bearer token
+      );
+
+      this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+      this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
       await this.updateBalances();
       document.getElementById('send-form').reset();
     } catch (error) {
       this.uiService.showError(error.message);
     }
   }
-  
- 
 
   async handleBuy(xrpAmount) {
     try {
@@ -218,18 +193,6 @@ class App {
       document.getElementById('retire-form').reset();
     } catch (error) {
       this.uiService.showError(error.message);
-    }
-  }
-
-  async updateBalances() {
-    try {
-      const xrpBalance = await this.walletService.getXRPBalance();
-      const tokenBalance = await this.tokenService.getTokenBalance();
-      
-      document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
-      document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
-    } catch (error) {
-      this.uiService.showError('Failed to update balances');
     }
   }
 }
