@@ -37,25 +37,16 @@ class App {
 
 
   initializeXumm() {
-    // Initialize the Xumm SDK
     this.xumm.on('ready', async () => {
       console.log('Xumm SDK is ready');
-  
-      // Check if the user is already signed in
-      const isSignedIn = await this.xumm.user.signedIn;
-      if (isSignedIn) {
-        // User is signed in, fetch account and token
-        this.fetchUserData();
-      } else {
-        // User is not signed in, listen for the success event
-        this.xumm.on('success', () => {
-          console.log('User has successfully signed in');
-          this.fetchUserData();
-        });
-      }
+      await this.fetchUserData(); // Fetch user data immediately when SDK is ready
     });
   
-    // Handle errors
+    this.xumm.on('success', () => {
+      console.log('User has successfully signed in');
+      this.fetchUserData(); // Refetch data if session is re-established
+    });
+  
     this.xumm.on('error', (error) => {
       console.error('Xumm SDK error:', error);
       document.getElementById('user-account').textContent = 'Error loading account';
@@ -63,33 +54,50 @@ class App {
     });
   }
   
-  // Separate method to fetch and display user data
   async fetchUserData() {
     try {
       const account = await this.xumm.user.account;
       const token = await this.xumm.user.token;
   
-      console.log('XUMM user data:', account, token);
+      if (account && token) {
+        console.log('XUMM user data:', account, token);
   
-      // Update UI
-      document.getElementById('user-account').textContent = this.formatAddress(account);
-      document.getElementById('user-token').textContent = this.formatToken(token);
+        // Update UI
+        document.getElementById('user-account').textContent = this.formatAddress(account);
+        document.getElementById('user-token').textContent = this.formatToken(token);
   
-      // Store account and token for later use
-      this.account = account;
-      this.token = token;
+        // Store account and token
+        this.account = account;
+        this.token = token;
   
-      // Update balances or other user-specific data
-      await this.updateBalances();
+        // Fetch balances
+        await this.updateBalances();
+      } else {
+        throw new Error('Account or token not available.');
+      }
     } catch (error) {
       console.error('Error fetching XUMM user data:', error);
       document.getElementById('user-account').textContent = 'Failed to load account';
       document.getElementById('user-token').textContent = 'Failed to load token';
     }
   }
+  
+  async updateBalances() {
+    try {
+      const xrpBalance = await this.walletService.getXRPBalance(this.account, this.token);
+      const tokenBalance = await this.tokenService.getTokenBalance();
+  
+      document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
+      document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
+    } catch (error) {
+      console.error('Failed to update balances:', error);
+      this.uiService.showError('Failed to update balances');
+    }
+  }
+  
+  
+  
 
-  
-  
   formatAddress(address) {
     if (!address) return 'Not connected';
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -189,21 +197,7 @@ class App {
     }
   }
   
-  async updateBalances() {
-    try {
-      const account = await this.xumm.user.account; // Get Xumm account
-      const token = await this.xumm.user.token; // Get Xumm token
-  
-      const xrpBalance = await this.walletService.getXRPBalance(account, token);
-      document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
-  
-      const tokenBalance = await this.tokenService.getTokenBalance();
-      document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
-    } catch (error) {
-      this.uiService.showError('Failed to update balances');
-    }
-  }
-  
+ 
 
   async handleBuy(xrpAmount) {
     try {
