@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SUSTAIN Token Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="./src/style.css" type="text/css">
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <div class="logo">
+          <img src="https://sustain.ventures/wp-content/uploads/2024/06/Logo-3-1-1-768x417.png" alt="SUSTAIN" class="logo-img">
+        </div>
+        <div class="wallet-info">
+          <div class="balance">
+            <i class="fas fa-wallet"></i>
+            <span id="xrp-balance">0 XRP</span>
+          </div>
+          <div class="balance">
+            <i class="fas fa-coins"></i>
+            <span id="token-balance">0 Tokens</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="toggle-container">
+          <button class="toggle-button active" data-section="send">
+            <i class="fas fa-paper-plane"></i> Send
+          </button>
+          <button class="toggle-button" data-section="buy">
+            <i class="fas fa-shopping-cart"></i> Buy
+          </button>
+          <button class="toggle-button" data-section="retire">
+            <i class="fas fa-archive"></i> Retire
+          </button>
+        </div>
+
+        <!-- Send Section -->
+        <section id="send-section" class="section active">
+          <div class="card">
+            <div class="card-content">
+              <h2><i class="fas fa-paper-plane"></i> Send</h2>
+              <form id="send-form" class="form-container">
+                <div class="form-group">
+                  <label for="currency-type">Select Currency</label>
+                  <select id="currency-type" required>
+                    <option value="xrp">XRP</option>
+                    <option value="token">Token</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="recipient">Recipient Address</label>
+                  <input type="text" id="recipient" placeholder="Enter recipient's address" required>
+                </div>
+                <div class="form-group">
+                  <label for="amount">Amount</label>
+                  <input type="number" id="amount" step="0.000001" min="0" placeholder="Enter amount" required>
+                  <p id="fee-note" class="note hidden">Note: 0.1% fee applies for token transfers</p>
+                </div>
+                <button type="submit" class="submit-button">Send</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- Buy Section -->
+        <section id="buy-section" class="section">
+          <div class="card">
+            <div class="card-content">
+              <h2><i class="fas fa-shopping-cart"></i> Buy</h2>
+              <form id="buy-form" class="form-container">
+                <div class="form-group">
+                  <label for="xrp-amount">XRP Amount</label>
+                  <input type="number" id="xrp-amount" step="0.000001" min="0" placeholder="Enter XRP amount" required>
+                </div>
+                <div class="form-group">
+                  <p id="token-estimate" class="note">Estimated tokens: 0</p>
+                </div>
+                <button type="submit" class="submit-button">Buy Tokens</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- Retire Section -->
+        <section id="retire-section" class="section">
+          <div class="card">
+            <div class="card-content">
+              <h2><i class="fas fa-archive"></i> Retire</h2>
+              <form id="retire-form" class="form-container">
+                <div class="form-group">
+                  <label for="retire-amount">Token Amount</label>
+                  <input type="number" id="retire-amount" step="0.01" min="0" placeholder="Enter token amount" required>
+                </div>
+                <div class="form-group">
+                  <p class="note">You'll receive an NFT certificate for your contribution</p>
+                </div>
+                <button type="submit" class="submit-button">Retire Tokens</button>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <div class="footer-content">
+          <div class="user-info">
+            <div class="info-item">
+              <i class="fas fa-user"></i>
+              <span id="user-account">Loading account...</span>
+            </div>
+            <div class="info-item">
+              <i class="fas fa-key"></i>
+              <span id="user-token">Loading token...</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
