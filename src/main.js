@@ -175,14 +175,13 @@ class App {
         const tokenName = document.getElementById('token-name').textContent.trim();
 
         try {
-          // Call the handleEnable function to initiate trustline
-          await handleEnable(tokenName);
+          // Bind handleEnable to the current instance
+          await this.handleEnable(tokenName);
         } catch (error) {
           console.error('Error enabling token:', error.message);
         }
       });
     }
-
 
     // Buy Form
     const buyForm = document.getElementById('buy-form');
@@ -207,45 +206,25 @@ class App {
 
 
 
-  async handleSend(formData) {
+  async handleEnable(tokenName) {
     try {
       const account = userContext.getAccount();
       const token = userContext.getToken();
+      const issuerAddress =  import.meta.env.VITE_ISSUER_ADDRESS;
+      const currencyCode = import.meta.env.VITE_CURRENCY_CODE;
+      const trust_limit = import.meta.env.VITE_CURRENCY_TRUST_LIMIT || 50000000; // Default to 50M if not set
 
-      const payload = await this.walletService.sendXRP(
-        account, // Sender
-        formData.recipient, // Recipient
-        formData.amount, // Amount
-        token // Bearer token
-      );
-
-      this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-      this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
-      await this.updateBalances();
-      document.getElementById('send-form').reset();
-    } catch (error) {
-      this.uiService.showError(error.message);
-    }
-  }
-
-
-  // Enable token
-
-  async  handleEnable(tokenName) {
-    try {
-      const account = userContext.getAccount(); 
-      const token = userContext.getToken(); 
-  
-      // Call createTrustline API from TokenService
       const payload = await this.tokenService.createTrustline(
-        account,    
-        import.meta.env.VITE_ISSUER_ADDRESS,
-        tokenName,
-        import.meta.env.VITE_CURRENCY_CODE,
-        token 
+        account,
+        issuerAddress,
+        currencyCode,
+        trust_limit, 
+        token
       );
-      
+  
+  
       console.log('Trustline payload:', payload);
+  
       // Open the Xumm sign request using the UUID from the payload
       xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
   
@@ -255,6 +234,42 @@ class App {
       // Update the user's balances
       await updateBalances();
   
+      // Reset the enable form
+      document.getElementById('enable-form').reset();
+    } catch (error) {
+      // Show error message if trustline creation fails
+      this.uiService.showError(error.message);
+      throw error; // Re-throw to log in the form submission catch block
+    }
+  }
+
+
+  // Enable token
+
+  async handleEnable(tokenName) {
+    try {
+      const account = userContext.getAccount();
+      const token = userContext.getToken();
+
+      // Call createTrustline API from TokenService
+      const payload = await this.tokenService.createTrustline(
+        account,
+        import.meta.env.VITE_ISSUER_ADDRESS,
+        tokenName,
+        import.meta.env.VITE_CURRENCY_CODE,
+        token
+      );
+
+      console.log('Trustline payload:', payload);
+      // Open the Xumm sign request using the UUID from the payload
+      xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+
+      // Show success message to the user
+      this.uiService.showSuccess(`${tokenName} trustline initiated. Please sign in Xumm.`);
+
+      // Update the user's balances
+      await updateBalances();
+
       // Reset the enable form
       document.getElementById('enable-form').reset();
     } catch (error) {
