@@ -68,16 +68,24 @@ class App {
     // });
 
     this.xumm.xapp.on('payload', async (data) => {
-      console.log('Payload resolved:', data);
-
-      if (data.signed) {
-        this.uiService.showSuccess('Transaction signed successfully!');
-        await this.updateBalances();
-      } else {
-        this.uiService.showError('Transaction was rejected or failed.');
+      console.log('Payload resolved:', JSON.stringify(data, null, 2));
+    
+      try {
+        // Check the reason field for the payload resolution status
+        if (data.reason === "SIGNED") {
+          this.uiService.showSuccess('Transaction signed successfully!');
+          await this.updateBalances(); // Update balances on successful transaction
+        } else if (data.reason === "DECLINED") {
+          this.uiService.showError('Transaction was rejected by the user.');
+        } else {
+          this.uiService.showError('Unexpected payload resolution reason.');
+        }
+      } catch (error) {
+        console.error('Error processing payload:', error);
+        this.uiService.showError('An error occurred while processing the transaction.');
       }
     });
-
+    
     this.xumm.on('error', (error) => {
       console.error('Xumm SDK error:', error);
       document.getElementById('user-account').textContent = 'Error loading account';
@@ -115,23 +123,33 @@ class App {
 
   async updateBalances() {
     try {
+      // Show loading indicators
+      document.getElementById('xrp-balance').textContent = 'Loading...';
+      document.getElementById('token-balance').textContent = 'Loading...';
+  
       const account = userContext.getAccount();
       const token = userContext.getToken();
-
+  
       if (!account || !token) {
         throw new Error('User account or token is missing.');
       }
-
+  
+      // Fetch balances
       const xrpBalance = await this.walletService.getXRPBalance(account, token);
-      document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
-
       const tokenBalance = await this.tokenService.getTokenBalance(account, token);
+  
+      // Update UI with the fetched balances
+      document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
       document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
+  
+      // Show success message after balances are updated
+      this.uiService.showSuccess('Balances updated successfully!');
     } catch (error) {
       console.error('Error in updateBalances:', error.message);
       this.uiService.showError('Failed to update balances');
     }
   }
+  
 
   formatAddress(address) {
     if (!address) return 'Not connected';
