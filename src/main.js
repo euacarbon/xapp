@@ -51,7 +51,9 @@ class App {
           document.getElementById('user-token').textContent = this.formatToken(token);
 
           // Fetch balances
-          await this.updateBalances();
+          // await this.updateBalances();
+          await this.fetchUserData(); 
+
         } else {
           throw new Error('Account or token not available.');
         }
