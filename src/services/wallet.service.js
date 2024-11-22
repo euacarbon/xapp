@@ -1,6 +1,6 @@
 export class WalletService {
   constructor() {
-    this.API_URL = import.meta.env.VITE_BASE_URL; // Fetch from .env
+    this.API_URL = import.meta.env.VITE_BASE_URL; 
   }
 
   async getXRPBalance(account, token) {

@@ -9,13 +9,26 @@ class App {
     this.walletService = new WalletService();
     this.tokenService = new TokenService();
     this.uiService = new UIService();
-    this.xumm = new Xumm('4821bc5b-0aad-4df5-aa7f-3f92040f69e1');
+    this.xumm = new Xumm(import.meta.env.VITE_XUMM_API_KEY); 
+
     this.initializeApp();
   }
 
   async initializeApp() {
     this.setupEventListeners();
     this.initializeXumm();
+  }
+
+  showSection(sectionId) {
+    // Update toggle buttons
+    document.querySelectorAll('.toggle-button').forEach(button => {
+      button.classList.toggle('active', button.dataset.section === sectionId);
+    });
+
+    // Update sections
+    document.querySelectorAll('.section').forEach(section => {
+      section.classList.toggle('active', section.id === `${sectionId}-section`);
+    });
   }
 
   initializeXumm() {
@@ -122,35 +135,56 @@ class App {
   setupEventListeners() {
     // Toggle Buttons
     document.querySelectorAll('.toggle-button').forEach(button => {
-      button.addEventListener('click', () => {
-        const section = button.dataset.section;
+      button.addEventListener('click', (e) => {
+        const section = e.target.closest('.toggle-button').dataset.section;
         this.showSection(section);
       });
     });
 
+    // Currency Type Change
+    const currencyTypeSelect = document.getElementById('currency-type');
+    if (currencyTypeSelect) {
+      currencyTypeSelect.addEventListener('change', (e) => {
+        const feeNote = document.getElementById('fee-note');
+        if (feeNote) {
+          feeNote.classList.toggle('hidden', e.target.value === 'xrp');
+        }
+      });
+    }
+
     // Send Form
-    document.getElementById('send-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = {
-        type: document.getElementById('currency-type').value,
-        recipient: document.getElementById('recipient').value,
-        amount: parseFloat(document.getElementById('amount').value)
-      };
-      await this.handleSend(formData);
-    });
+    const sendForm = document.getElementById('send-form');
+    if (sendForm) {
+      sendForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = {
+          type: document.getElementById('currency-type').value,
+          recipient: document.getElementById('recipient').value,
+          amount: parseFloat(document.getElementById('amount').value)
+        };
+        await this.handleSend(formData);
+      });
+    }
 
-    // Other form listeners
-    document.getElementById('buy-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const xrpAmount = parseFloat(document.getElementById('xrp-amount').value);
-      await this.handleBuy(xrpAmount);
-    });
+    // Buy Form
+    const buyForm = document.getElementById('buy-form');
+    if (buyForm) {
+      buyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const xrpAmount = parseFloat(document.getElementById('xrp-amount').value);
+        await this.handleBuy(xrpAmount);
+      });
+    }
 
-    document.getElementById('retire-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const amount = parseFloat(document.getElementById('retire-amount').value);
-      await this.handleRetire(amount);
-    });
+    // Retire Form
+    const retireForm = document.getElementById('retire-form');
+    if (retireForm) {
+      retireForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = parseFloat(document.getElementById('retire-amount').value);
+        await this.handleRetire(amount);
+      });
+    }
   }
 
   async handleSend(formData) {
