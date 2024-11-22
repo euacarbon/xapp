@@ -226,15 +226,9 @@ class App {
       console.log('Trustline payload:', payload);
   
       // Open the Xumm sign request using the UUID from the payload
-      xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+      this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+      this.uiService.showSuccess(`${tokenName} trustline initiated. Please approve transaction.`);
   
-      // Show success message to the user
-      this.uiService.showSuccess(`${tokenName} trustline initiated. Please sign in Xumm.`);
-  
-      // Update the user's balances
-      await updateBalances();
-  
-      // Reset the enable form
       document.getElementById('enable-form').reset();
     } catch (error) {
       // Show error message if trustline creation fails
@@ -244,38 +238,25 @@ class App {
   }
 
 
-  // Enable token
-
-  async handleEnable(tokenName) {
+  
+  async handleSend(formData) {
     try {
       const account = userContext.getAccount();
       const token = userContext.getToken();
 
-      // Call createTrustline API from TokenService
-      const payload = await this.tokenService.createTrustline(
-        account,
-        import.meta.env.VITE_ISSUER_ADDRESS,
-        tokenName,
-        import.meta.env.VITE_CURRENCY_CODE,
-        token
+      const payload = await this.walletService.sendXRP(
+        account, // Sender
+        formData.recipient, // Recipient
+        formData.amount, // Amount
+        token // Bearer token
       );
 
-      console.log('Trustline payload:', payload);
-      // Open the Xumm sign request using the UUID from the payload
-      xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-
-      // Show success message to the user
-      this.uiService.showSuccess(`${tokenName} trustline initiated. Please sign in Xumm.`);
-
-      // Update the user's balances
-      await updateBalances();
-
-      // Reset the enable form
-      document.getElementById('enable-form').reset();
+      this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+      this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
+      await this.updateBalances();
+      document.getElementById('send-form').reset();
     } catch (error) {
-      // Show error message if trustline creation fails
       this.uiService.showError(error.message);
-      throw error; // Re-throw to log in the form submission catch block
     }
   }
 
