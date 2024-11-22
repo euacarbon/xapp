@@ -1,13 +1,9 @@
 export class WalletService {
   constructor() {
-    this.API_URL = import.meta.env.VITE_BASE_URL; 
+    this.API_URL = import.meta.env.VITE_BASE_URL;
   }
 
   async getXRPBalance(account, token) {
-    console.log('Calling getXRPBalance API...');
-    console.log('API URL:', `${this.API_URL}/tokens/getXRPBalance?account=${account}`);
-    console.log('Authorization Header:', `Bearer ${token}`);
-  
     try {
       const response = await fetch(`${this.API_URL}/tokens/getXRPBalance?account=${account}`, {
         method: 'GET',
@@ -16,14 +12,12 @@ export class WalletService {
           'Content-Type': 'application/json',
         },
       });
-  
+
       if (!response.ok) {
         throw new Error(`Failed API call: ${response.status}`);
       }
-  
+
       const data = await response.json();
-      console.log('API Response:', data);
-  
       // Extract balance from the nested structure
       const balance = data.balance?.balance || 0; // Default to 0 if undefined
       return balance;
@@ -32,7 +26,7 @@ export class WalletService {
       throw error;
     }
   }
-  
+
 
   async sendXRP(sender, recipient, amount, token) {
     try {

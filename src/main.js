@@ -9,7 +9,7 @@ class App {
     this.walletService = new WalletService();
     this.tokenService = new TokenService();
     this.uiService = new UIService();
-    this.xumm = new Xumm(import.meta.env.VITE_XUMM_API_KEY); 
+    this.xumm = new Xumm(import.meta.env.VITE_XUMM_API_KEY);
 
     this.initializeApp();
   }
@@ -166,6 +166,24 @@ class App {
       });
     }
 
+    const enableForm = document.getElementById('enable-form');
+    if (enableForm) {
+      enableForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Get token name dynamically
+        const tokenName = document.getElementById('token-name').textContent.trim();
+
+        try {
+          // Call the handleEnable function to initiate trustline
+          await handleEnable(tokenName);
+        } catch (error) {
+          console.error('Error enabling token:', error.message);
+        }
+      });
+    }
+
+
     // Buy Form
     const buyForm = document.getElementById('buy-form');
     if (buyForm) {
@@ -187,6 +205,8 @@ class App {
     }
   }
 
+
+
   async handleSend(formData) {
     try {
       const account = userContext.getAccount();
@@ -207,6 +227,43 @@ class App {
       this.uiService.showError(error.message);
     }
   }
+
+
+  // Enable token
+
+  async  handleEnable(tokenName) {
+    try {
+      const account = userContext.getAccount(); 
+      const token = userContext.getToken(); 
+  
+      // Call createTrustline API from TokenService
+      const payload = await this.tokenService.createTrustline(
+        account,    
+        import.meta.env.VITE_ISSUER_ADDRESS,
+        tokenName,
+        import.meta.env.VITE_CURRENCY_CODE,
+        token 
+      );
+      
+      console.log('Trustline payload:', payload);
+      // Open the Xumm sign request using the UUID from the payload
+      xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+  
+      // Show success message to the user
+      this.uiService.showSuccess(`${tokenName} trustline initiated. Please sign in Xumm.`);
+  
+      // Update the user's balances
+      await updateBalances();
+  
+      // Reset the enable form
+      document.getElementById('enable-form').reset();
+    } catch (error) {
+      // Show error message if trustline creation fails
+      this.uiService.showError(error.message);
+      throw error; // Re-throw to log in the form submission catch block
+    }
+  }
+
 
   async handleBuy(xrpAmount) {
     try {
@@ -230,6 +287,17 @@ class App {
     }
   }
 }
+
+
+// Dynamically set the token name from .env
+document.addEventListener('DOMContentLoaded', () => {
+  const tokenNameElement = document.getElementById('token-name');
+  if (tokenNameElement) {
+    const tokenName = import.meta.env.VITE_CURRENCY_CODE || 'Token'; // Fallback to 'Token' if env is not set
+    tokenNameElement.textContent = tokenName;
+  }
+});
+
 
 // Initialize the app
 new App();

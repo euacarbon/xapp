@@ -230,3 +230,83 @@ input:focus, select:focus {
     justify-content: center;
   }
 }
+
+/* Enable Section */
+#enable-section {
+  display: none;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease-in-out;
+}
+
+#enable-section.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#enable-section .card {
+  background-color: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#enable-section .card-content {
+  padding: 1.5rem;
+}
+
+#enable-section .card-content h2 {
+  color: var(--primary-dark);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+}
+
+#enable-section .card-content h2 i {
+  color: var(--primary-light);
+}
+
+#enable-section .sub-heading {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+#enable-section .form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+#enable-section .confirm-button {
+  background-color: var(--primary-light);
+  color: var(--white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 4px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 300px; /* Adjust based on your layout preference */
+  text-align: center;
+}
+
+#enable-section .confirm-button:hover {
+  background-color: #e0a500;
+  transform: translateY(-1px);
+}
+
+#enable-section .confirm-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  #enable-section .confirm-button {
+    max-width: 100%; /* Make button span full width on smaller screens */
+  }
+}
