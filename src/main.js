@@ -114,7 +114,7 @@ class App {
       const xrpBalance = await this.walletService.getXRPBalance(account, token);
       document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
 
-      const tokenBalance = await this.tokenService.getTokenBalance();
+      const tokenBalance = await this.tokenService.getTokenBalance(account, token);
       document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
     } catch (error) {
       console.error('Error in updateBalances:', error.message);
