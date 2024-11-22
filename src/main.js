@@ -62,9 +62,20 @@ class App {
       }
     });
 
-    this.xumm.on('success', () => {
-      console.log('User has successfully signed in');
-      this.fetchUserData(); // Re-fetch data
+    // this.xumm.on('success', () => {
+    //   console.log('User has successfully signed in');
+    //   this.fetchUserData(); // Re-fetch data
+    // });
+
+    this.xumm.xapp.on('payload', async (data) => {
+      console.log('Payload resolved:', data);
+
+      if (data.signed) {
+        this.uiService.showSuccess('Transaction signed successfully!');
+        await this.updateBalances();
+      } else {
+        this.uiService.showError('Transaction was rejected or failed.');
+      }
     });
 
     this.xumm.on('error', (error) => {
@@ -227,7 +238,7 @@ class App {
   
       // Open the Xumm sign request using the UUID from the payload
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-      this.uiService.showSuccess(`${tokenName} trustline initiated. Please approve transaction.`);
+      // this.uiService.showSuccess(`${tokenName} trustline set. You can receive token.`);
   
       document.getElementById('enable-form').reset();
     } catch (error) {
@@ -252,7 +263,7 @@ class App {
       );
 
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-      this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
+      // this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
       await this.updateBalances();
       document.getElementById('send-form').reset();
     } catch (error) {
