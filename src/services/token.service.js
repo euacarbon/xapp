@@ -31,7 +31,7 @@ export class TokenService {
 
   async sendTokens(recipient, amount) {
     try {
-      const response = await fetch(`${this.API_URL}/send-tokens`, {
+      const response = await fetch(`${this.API_URL}/sendToken`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

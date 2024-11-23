@@ -272,7 +272,6 @@ class App {
   }
 
 
-  
   async handleSend(formData) {
     try {
       const account = userContext.getAccount();
