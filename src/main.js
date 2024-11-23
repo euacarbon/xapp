@@ -151,7 +151,7 @@ class App {
       // this.uiService.showSuccess('Balances updated successfully!');
     } catch (error) {
       console.error('Error in updateBalances:', error.message);
-      this.uiService.showError('Failed to update balances');
+      // this.uiService.showError('Failed to update balances');
     }
   }
   
