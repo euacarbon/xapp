@@ -29,25 +29,27 @@ export class TokenService {
   }
 
 
-  async sendTokens(recipient, amount) {
+  async sendTokens(sender, recipient, amount, token) {
     try {
-      const response = await fetch(`${this.API_URL}/sendToken`, {
+      const response = await fetch(`${this.API_URL}/tokens/sendToken`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ recipient, amount }),
+        body: JSON.stringify({ sender, destination: recipient, amount }),
       });
 
       if (!response.ok) {
         throw new Error('Transaction failed');
       }
 
-      return await response.json();
+      return await response.json(); // Return payload from the response
     } catch (error) {
-      throw new Error('Failed to send tokens');
+      throw new Error('Failed to send XRP');
     }
   }
+
 
 
   async buyTokens(xrpAmount) {
