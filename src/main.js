@@ -10,6 +10,7 @@ class App {
     this.tokenService = new TokenService();
     this.uiService = new UIService();
     this.xumm = new Xumm(import.meta.env.VITE_XUMM_API_KEY);
+    this.currentTokenBalance = 0;
 
     this.initializeApp();
   }
@@ -76,7 +77,6 @@ class App {
         // Check the reason field for the payload resolution status
         if (data.reason === "SIGNED") {
           this.uiService.showSuccess('Transaction signed successfully!');
-          await this.updateBalances(); // Update balances on successful transaction
         } else if (data.reason === "DECLINED") {
           this.uiService.showError('Transaction was rejected by the user.');
         } else {
@@ -139,6 +139,9 @@ class App {
       // Fetch balances
       const xrpBalance = await this.walletService.getXRPBalance(account, token);
       const tokenBalance = await this.tokenService.getTokenBalance(account, token);
+
+      this.currentTokenBalance = tokenBalance;
+
   
       // Update UI with the fetched balances
       document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
@@ -276,14 +279,14 @@ class App {
       const token = userContext.getToken();
 
       if (!account || !token) {
-        throw new Error('User account or token is missing.');
+        throw new Error('Session Expired, Close xApp and Open again.');
       }
 
-      if(formData.amount>tokenBalance)
-      {
-        throw new Error('Insufficient balance');
-        
-      }
+     // Check if the user has sufficient balance
+     if (formData.amount > this.currentTokenBalance) {
+      throw new Error('Insufficient balance');
+    }
+
       const payload = await this.tokenService.sendTokens(
         account,
         formData.recipient, 
