@@ -275,10 +275,19 @@ class App {
       const account = userContext.getAccount();
       const token = userContext.getToken();
 
-      const payload = await this.walletService.sendXRP(
-        account, // Sender
-        formData.recipient, // Recipient
-        formData.amount, // Amount
+      if (!account || !token) {
+        throw new Error('User account or token is missing.');
+      }
+
+      if(formData.amount>tokenBalance)
+      {
+        throw new Error('Insufficient balance');
+        
+      }
+      const payload = await this.tokenService.sendTokens(
+        account,
+        formData.recipient, 
+        formData.amount,
         token // Bearer token
       );
 
