@@ -145,7 +145,7 @@ class App {
       document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
   
       // Show success message after balances are updated
-      this.uiService.showSuccess('Balances updated successfully!');
+      // this.uiService.showSuccess('Balances updated successfully!');
     } catch (error) {
       console.error('Error in updateBalances:', error.message);
       this.uiService.showError('Failed to update balances');
