@@ -272,37 +272,71 @@ class App {
   }
 
 
+  // async handleSend(formData) {
+  //   try {
+  //     const account = userContext.getAccount();
+  //     const token = userContext.getToken();
+
+  //     if (!account || !token) {
+  //       throw new Error('Session Expired, Close xApp and Open again.');
+  //     }
+
+  //    // Check if the user has sufficient balance
+  //    if (formData.amount > this.currentTokenBalance) {
+  //     throw new Error('Insufficient balance');
+  //   }
+
+  //     const payload = await this.tokenService.sendTokens(
+  //       account,
+  //       formData.recipient, 
+  //       formData.amount,
+  //       token // Bearer token
+  //     );
+
+  //     this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+  //     // this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
+  //     await this.updateBalances();
+  //     document.getElementById('send-form').reset();
+  //   } catch (error) {
+  //     this.uiService.showError(error.message);
+  //   }
+  // }
+
+
   async handleSend(formData) {
     try {
       const account = userContext.getAccount();
       const token = userContext.getToken();
-
+  
       if (!account || !token) {
-        throw new Error('Session Expired, Close xApp and Open again.');
+        throw new Error('User account or token is missing.');
       }
-
-     // Check if the user has sufficient balance
-     if (formData.amount > this.currentTokenBalance) {
-      throw new Error('Insufficient balance');
-    }
-
+  
+      if (formData.amount > this.currentTokenBalance) {
+        throw new Error('Insufficient balance');
+      }
+  
+      const originalBalance = this.currentTokenBalance;
+  
       const payload = await this.tokenService.sendTokens(
         account,
-        formData.recipient, 
+        formData.recipient,
         formData.amount,
-        token // Bearer token
+        token
       );
-
+  
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-      // this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
-      await this.updateBalances();
+  
+      // Poll until balance updates
+      await this.pollBalanceUpdate(originalBalance);
+  
       document.getElementById('send-form').reset();
     } catch (error) {
       this.uiService.showError(error.message);
     }
   }
 
-
+  
   async handleBuy(xrpAmount) {
     try {
       await this.tokenService.buyTokens(xrpAmount);
@@ -324,7 +358,27 @@ class App {
       this.uiService.showError(error.message);
     }
   }
+
+async pollBalanceUpdate(originalBalance, retries = 5, interval = 5000) {
+  for (let i = 0; i < retries; i++) {
+    await this.updateBalances();
+
+    // Check if the balance has updated
+    if (this.currentTokenBalance !== originalBalance) {
+      return; // Exit polling when balance changes
+    }
+
+    // Wait before the next retry
+    await new Promise(resolve => setTimeout(resolve, interval));
+  }
+
+  console.warn('Balance update polling timed out');
 }
+
+
+
+}
+
 
 
 // Dynamically set the token name from .env
@@ -335,6 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
     tokenNameElement.textContent = tokenName;
   }
 });
+
+
 
 
 // Initialize the app
