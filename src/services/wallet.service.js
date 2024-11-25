@@ -36,7 +36,7 @@ export class WalletService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ sender: recipient, amount }),
+        body: JSON.stringify({ sender, destination: recipient, amount }),
       });
 
       if (!response.ok) {

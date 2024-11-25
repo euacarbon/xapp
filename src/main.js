@@ -53,7 +53,7 @@ class App {
 
           // Fetch balances
           // await this.updateBalances();
-          await this.fetchUserData(); 
+          await this.fetchUserData();
 
         } else {
           throw new Error('Account or token not available.');
@@ -72,7 +72,7 @@ class App {
 
     this.xumm.xapp.on('payload', async (data) => {
       console.log('Payload resolved:', JSON.stringify(data, null, 2));
-    
+
       try {
         // Check the reason field for the payload resolution status
         if (data.reason === "SIGNED") {
@@ -87,7 +87,7 @@ class App {
         this.uiService.showError('An error occurred while processing the transaction.');
       }
     });
-    
+
     this.xumm.on('error', (error) => {
       console.error('Xumm SDK error:', error);
       document.getElementById('user-account').textContent = 'Error loading account';
@@ -128,25 +128,25 @@ class App {
       // Show loading indicators
       document.getElementById('xrp-balance').textContent = 'Loading...';
       document.getElementById('token-balance').textContent = 'Loading...';
-  
+
       const account = userContext.getAccount();
       const token = userContext.getToken();
-  
+
       if (!account || !token) {
         throw new Error('User account or token is missing.');
       }
-  
+
       // Fetch balances
       const xrpBalance = await this.walletService.getXRPBalance(account, token);
       const tokenBalance = await this.tokenService.getTokenBalance(account, token);
 
       this.currentTokenBalance = tokenBalance;
 
-  
+
       // Update UI with the fetched balances
       document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
       document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
-  
+
       // Show success message after balances are updated
       // this.uiService.showSuccess('Balances updated successfully!');
     } catch (error) {
@@ -154,7 +154,7 @@ class App {
       // this.uiService.showError('Failed to update balances');
     }
   }
-  
+
 
   formatAddress(address) {
     if (!address) return 'Not connected';
@@ -200,6 +200,8 @@ class App {
       });
     }
 
+    // TRUSTLINE FORM
+
     const enableForm = document.getElementById('enable-form');
     if (enableForm) {
       enableForm.addEventListener('submit', async (e) => {
@@ -217,15 +219,57 @@ class App {
       });
     }
 
-    // Buy Form
+    //  // Buy Form
+    // const buyForm = document.getElementById('buy-form');
+    // if (buyForm) {
+    //   buyForm.addEventListener('submit', async (e) => {
+    //     e.preventDefault();
+    //     const formData = {
+    //       price: parseFloat(document.getElementById('xrp-price').value),
+    //       xrpAmount: parseFloat(document.getElementById('xrp-amount').value),
+    //     };
+    //     await handleBuy(formData); // Assuming handleBuy is defined elsewhere
+    //   });
+    // }
+
+
     const buyForm = document.getElementById('buy-form');
     if (buyForm) {
       buyForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const xrpAmount = parseFloat(document.getElementById('xrp-amount').value);
-        await this.handleBuy(xrpAmount);
+
+        const amount = parseFloat(document.getElementById('xrp-amount').value);
+        const pricePerXRP = parseFloat(document.getElementById('xrp-price').value);
+
+        if (isNaN(amount) || isNaN(pricePerXRP) || amount <= 0 || pricePerXRP <= 0) {
+          return this.uiService.showError('Invalid input for amount or price.');
+        }
+
+        const formData = {
+          amount,
+          price: amount * pricePerXRP, // Calculate the total price
+        };
+
+        await this.handleBuy(formData);
       });
     }
+
+
+
+
+    //  // Send Form
+    //  const sendForm = document.getElementById('send-form');
+    //  if (sendForm) {
+    //    sendForm.addEventListener('submit', async (e) => {
+    //      e.preventDefault();
+    //      const formData = {
+    //        type: document.getElementById('currency-type').value,
+    //        recipient: document.getElementById('recipient').value,
+    //        amount: parseFloat(document.getElementById('amount').value)
+    //      };
+    //      await this.handleSend(formData);
+    //    });
+    //  }
 
     // Retire Form
     const retireForm = document.getElementById('retire-form');
@@ -244,7 +288,7 @@ class App {
     try {
       const account = userContext.getAccount();
       const token = userContext.getToken();
-      const issuerAddress =  import.meta.env.VITE_ISSUER_ADDRESS;
+      const issuerAddress = import.meta.env.VITE_ISSUER_ADDRESS;
       const currencyCode = import.meta.env.VITE_CURRENCY_CODE;
       const trust_limit = import.meta.env.VITE_CURRENCY_TRUST_LIMIT || 50000000; // Default to 50M if not set
 
@@ -252,17 +296,17 @@ class App {
         account,
         issuerAddress,
         currencyCode,
-        trust_limit, 
+        trust_limit,
         token
       );
-  
-  
+
+
       console.log('Trustline payload:', payload);
-  
+
       // Open the Xumm sign request using the UUID from the payload
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
       // this.uiService.showSuccess(`${tokenName} trustline set. You can receive token.`);
-  
+
       document.getElementById('enable-form').reset();
     } catch (error) {
       // Show error message if trustline creation fails
@@ -307,46 +351,84 @@ class App {
     try {
       const account = userContext.getAccount();
       const token = userContext.getToken();
-  
+
       if (!account || !token) {
         throw new Error('User account or token is missing.');
       }
-  
+
       if (formData.amount > this.currentTokenBalance) {
         throw new Error('Insufficient balance');
       }
-  
+
       const originalBalance = this.currentTokenBalance;
-  
+
       const payload = await this.tokenService.sendTokens(
         account,
         formData.recipient,
         formData.amount,
         token
       );
-  
+
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-  
+
       // Poll until balance updates
       await this.pollBalanceUpdate(originalBalance);
-  
+
       document.getElementById('send-form').reset();
     } catch (error) {
       this.uiService.showError(error.message);
     }
   }
 
-  
-  async handleBuy(xrpAmount) {
+
+  // async handleBuy(xrpAmount) {
+  //   try {
+  //     await this.tokenService.buyTokens(xrpAmount);
+  //     this.uiService.showSuccess('Tokens purchased successfully');
+  //     await this.updateBalances();
+  //     document.getElementById('buy-form').reset();
+  //   } catch (error) {
+  //     this.uiService.showError(error.message);
+  //   }
+  // }
+
+
+
+  async handleBuy(formData) {
     try {
-      await this.tokenService.buyTokens(xrpAmount);
-      this.uiService.showSuccess('Tokens purchased successfully');
-      await this.updateBalances();
+      const account = userContext.getAccount();
+      const token = userContext.getToken();
+
+      if (!account || !token) {
+        throw new Error('User account or token is missing.');
+      }
+
+      if (formData.amount > this.currentTokenBalance) {
+        throw new Error('Insufficient balance');
+      }
+
+      const originalBalance = this.currentTokenBalance;
+
+      // Send the trade request via TokenService
+      const payload = await this.tokenService.buyTokens(
+        account,
+        "buy", // action
+        formData.price, // Calculated price
+        formData.amount, // Entered amount
+        token
+      );
+
+      this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
+
+      // Poll until balance updates
+      await this.pollBalanceUpdate(originalBalance);
+
       document.getElementById('buy-form').reset();
     } catch (error) {
       this.uiService.showError(error.message);
     }
   }
+
 
   async handleRetire(amount) {
     try {
@@ -359,21 +441,21 @@ class App {
     }
   }
 
-async pollBalanceUpdate(originalBalance, retries = 5, interval = 5000) {
-  for (let i = 0; i < retries; i++) {
-    await this.updateBalances();
+  async pollBalanceUpdate(originalBalance, retries = 5, interval = 5000) {
+    for (let i = 0; i < retries; i++) {
+      await this.updateBalances();
 
-    // Check if the balance has updated
-    if (this.currentTokenBalance !== originalBalance) {
-      return; // Exit polling when balance changes
+      // Check if the balance has updated
+      if (this.currentTokenBalance !== originalBalance) {
+        return; // Exit polling when balance changes
+      }
+
+      // Wait before the next retry
+      await new Promise(resolve => setTimeout(resolve, interval));
     }
 
-    // Wait before the next retry
-    await new Promise(resolve => setTimeout(resolve, interval));
+    console.warn('Balance update polling timed out');
   }
-
-  console.warn('Balance update polling timed out');
-}
 
 
 
