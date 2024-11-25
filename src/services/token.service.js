@@ -69,7 +69,7 @@ export class TokenService {
   
       return await response.json(); // Return payload from the response
     } catch (error) {
-      throw new Error('Failed to send XRP');
+      throw new Error('Failed to send buyTokens');
     }
   }
   

@@ -141,6 +141,7 @@ class App {
       const tokenBalance = await this.tokenService.getTokenBalance(account, token);
 
       this.currentTokenBalance = tokenBalance;
+      this.currentxrpBalance = xrpBalance;
 
 
       // Update UI with the fetched balances
@@ -361,6 +362,8 @@ class App {
       }
 
       const originalBalance = this.currentTokenBalance;
+      const originalxRPBalance = this.currentxrpBalance;
+
 
       const payload = await this.tokenService.sendTokens(
         account,
@@ -372,7 +375,7 @@ class App {
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
 
       // Poll until balance updates
-      await this.pollBalanceUpdate(originalBalance);
+      await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
 
       document.getElementById('send-form').reset();
     } catch (error) {
@@ -403,11 +406,13 @@ class App {
         throw new Error('User account or token is missing.');
       }
 
-      if (formData.amount > this.currentTokenBalance) {
-        throw new Error('Insufficient balance');
+      if (formData.amount > this.currentxrpBalance) {
+        throw new Error('Insufficient XRP balance');
       }
 
       const originalBalance = this.currentTokenBalance;
+      const originalxRPBalance = this.currentxrpBalance;
+
 
       // Send the trade request via TokenService
       const payload = await this.tokenService.buyTokens(
@@ -421,7 +426,7 @@ class App {
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
 
       // Poll until balance updates
-      await this.pollBalanceUpdate(originalBalance);
+      await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
 
       document.getElementById('buy-form').reset();
     } catch (error) {
@@ -441,13 +446,17 @@ class App {
     }
   }
 
-  async pollBalanceUpdate(originalBalance, retries = 5, interval = 5000) {
+  async pollBalanceUpdate(originalBalance, originalxRPBalance, retries = 5, interval = 5000) {
     for (let i = 0; i < retries; i++) {
       await this.updateBalances();
 
       // Check if the balance has updated
       if (this.currentTokenBalance !== originalBalance) {
         return; // Exit polling when balance changes
+      }
+
+       if (this.currentxrpBalance !== originalxRPBalance) {
+        return; 
       }
 
       // Wait before the next retry
