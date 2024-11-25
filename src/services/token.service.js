@@ -60,18 +60,22 @@ export class TokenService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ account, destination: action, price, amount }),
+        body: JSON.stringify({ account, action, price, amount }), 
       });
   
       if (!response.ok) {
-        throw new Error('Transaction failed');
+        const errorResponse = await response.json(); 
+        console.error('Server Error:', errorResponse);
+        throw new Error(errorResponse.message || 'Transaction failed');
       }
   
       return await response.json(); // Return payload from the response
     } catch (error) {
+      console.error('Error in buyTokens:', error);
       throw new Error('Failed to send buyTokens');
     }
   }
+
   
 
 
