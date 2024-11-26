@@ -403,7 +403,7 @@ class App {
 
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
 
-      const getPaymentpayload = await this.xumm.xapp.getPayload(paymentPayload.payload.uuid);
+      const getPaymentpayload = await this.xumm.getPayload(paymentPayload.payload.uuid);
       console.log('getPaymentpayload:', getPaymentpayload);
       if (payload.meta.signed) {
         const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
