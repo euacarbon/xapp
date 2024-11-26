@@ -405,7 +405,7 @@ class App {
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
   
       // Wait for the user to sign the payment payload
-      await this.pollSignature(paymentPayload.payload.uuid);
+      // await this.pollSignature(paymentPayload.payload.uuid);
   
       // Step 2: Create the mintNFT transaction payload
       const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
@@ -414,7 +414,7 @@ class App {
       this.xumm.xapp.openSignRequest({ uuid: nftPayload.mintPayload.uuid });
   
       // Wait for the user to sign the mint payload
-      await this.pollSignature(nftPayload.mintPayload.uuid);
+      // await this.pollSignature(nftPayload.mintPayload.uuid);
   
       // Poll until the balance updates
       await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
@@ -428,19 +428,19 @@ class App {
     }
   }
   
-  async pollSignature(uuid) {
-    // Poll until the transaction is signed or rejected
-    let status = await this.xumm.xapp.getPayload(uuid);
+  // async pollSignature(uuid) {
+  //   // Poll until the transaction is signed or rejected
+  //   let status = await this.xumm.xapp.getPayload(uuid);
   
-    while (!status.meta.signed) {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      status = await this.xumm.xapp.getPayload(uuid);
-    }
+  //   while (!status.meta.signed) {
+  //     await new Promise((resolve) => setTimeout(resolve, 2000));
+  //     status = await this.xumm.xapp.getPayload(uuid);
+  //   }
   
-    if (status.meta.cancelled) {
-      throw new Error('Transaction was canceled by the user.');
-    }
-  }
+  //   if (status.meta.cancelled) {
+  //     throw new Error('Transaction was canceled by the user.');
+  //   }
+  // }
   
   
 
