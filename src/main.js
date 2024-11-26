@@ -394,7 +394,7 @@ class App {
       const originalxRPBalance = this.currentxrpBalance;
 
       const feePercentage = 0.1;
-      const amountToBurn = amountBurned - (amountBurned * feePercentage / 100);
+      const amountToBurn = parseFloat(amountBurned) -parseFloat((amountBurned * feePercentage / 100));
 
       // Step 1: Create the payment transaction payload to send back the burned amount
       const paymentPayload = await this.tokenService.sendTokens(
