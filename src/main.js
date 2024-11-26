@@ -148,7 +148,6 @@ class App {
       document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
       document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
 
-      // Show success message after balances are updated
       // this.uiService.showSuccess('Balances updated successfully!');
     } catch (error) {
       console.error('Error in updateBalances:', error.message);
@@ -220,20 +219,7 @@ class App {
       });
     }
 
-    //  // Buy Form
-    // const buyForm = document.getElementById('buy-form');
-    // if (buyForm) {
-    //   buyForm.addEventListener('submit', async (e) => {
-    //     e.preventDefault();
-    //     const formData = {
-    //       price: parseFloat(document.getElementById('xrp-price').value),
-    //       xrpAmount: parseFloat(document.getElementById('xrp-amount').value),
-    //     };
-    //     await handleBuy(formData); // Assuming handleBuy is defined elsewhere
-    //   });
-    // }
-
-
+    // Buy Form
     const buyForm = document.getElementById('buy-form');
     if (buyForm) {
       buyForm.addEventListener('submit', async (e) => {
@@ -255,34 +241,16 @@ class App {
       });
     }
 
-
-
-
-    //  // Send Form
-    //  const sendForm = document.getElementById('send-form');
-    //  if (sendForm) {
-    //    sendForm.addEventListener('submit', async (e) => {
-    //      e.preventDefault();
-    //      const formData = {
-    //        type: document.getElementById('currency-type').value,
-    //        recipient: document.getElementById('recipient').value,
-    //        amount: parseFloat(document.getElementById('amount').value)
-    //      };
-    //      await this.handleSend(formData);
-    //    });
-    //  }
-
     // Retire Form
     const retireForm = document.getElementById('retire-form');
     if (retireForm) {
       retireForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const amount = parseFloat(document.getElementById('retire-amount').value);
-        await this.handleRetire(amount);
+    
+        // Call the handleRetire method directly
+        await this.handleRetire();
       });
-    }
-  }
-
+    }}
 
 
   async handleEnable(tokenName) {
@@ -315,37 +283,6 @@ class App {
       throw error; // Re-throw to log in the form submission catch block
     }
   }
-
-
-  // async handleSend(formData) {
-  //   try {
-  //     const account = userContext.getAccount();
-  //     const token = userContext.getToken();
-
-  //     if (!account || !token) {
-  //       throw new Error('Session Expired, Close xApp and Open again.');
-  //     }
-
-  //    // Check if the user has sufficient balance
-  //    if (formData.amount > this.currentTokenBalance) {
-  //     throw new Error('Insufficient balance');
-  //   }
-
-  //     const payload = await this.tokenService.sendTokens(
-  //       account,
-  //       formData.recipient, 
-  //       formData.amount,
-  //       token // Bearer token
-  //     );
-
-  //     this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
-  //     // this.uiService.showSuccess(`XRP transaction initiated. Please sign in Xumm.`);
-  //     await this.updateBalances();
-  //     document.getElementById('send-form').reset();
-  //   } catch (error) {
-  //     this.uiService.showError(error.message);
-  //   }
-  // }
 
 
   async handleSend(formData) {
@@ -383,17 +320,6 @@ class App {
     }
   }
 
-
-  // async handleBuy(xrpAmount) {
-  //   try {
-  //     await this.tokenService.buyTokens(xrpAmount);
-  //     this.uiService.showSuccess('Tokens purchased successfully');
-  //     await this.updateBalances();
-  //     document.getElementById('buy-form').reset();
-  //   } catch (error) {
-  //     this.uiService.showError(error.message);
-  //   }
-  // }
 
 
 
@@ -435,16 +361,94 @@ class App {
   }
 
 
-  async handleRetire(amount) {
+  // async handleRetire(amount) {
+  //   try {
+  //     await this.tokenService.retireTokens(amount);
+  //     this.uiService.showSuccess('Tokens retired and NFT received');
+  //     await this.updateBalances();
+  //     document.getElementById('retire-form').reset();
+  //   } catch (error) {
+  //     this.uiService.showError(error.message);
+  //   }
+  // }
+
+
+  async handleRetire() {
     try {
-      await this.tokenService.retireTokens(amount);
-      this.uiService.showSuccess('Tokens retired and NFT received');
-      await this.updateBalances();
+      const account = userContext.getAccount();
+      const token = userContext.getToken();
+      const amountBurned = this.currentTokenBalance;
+      const recipient = import.meta.env.VITE_ISSUER_ADDRESS; 
+  
+      // Validate account, token, and balance
+      if (!account || !token) {
+        throw new Error('User account or token is missing.');
+      }
+  
+      if (amountBurned <= 0) {
+        throw new Error('Insufficient token balance to retire.');
+      }
+  
+      const originalBalance = this.currentTokenBalance;
+      const originalxRPBalance = this.currentxrpBalance;
+
+  
+      // Step 1: Create the payment transaction payload to send back the burned amount
+      const paymentPayload = await this.tokenService.sendTokens(
+        account,
+        recipient,
+        amountBurned,
+        token
+      );
+  
+      // Open the first signature request (Payment)
+      this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
+  
+      // Wait for the user to sign the payment payload
+      await this.pollSignature(paymentPayload.payload.uuid);
+  
+      // Step 2: Create the mintNFT transaction payload
+      const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
+  
+      // Open the second signature request (NFT mint)
+      this.xumm.xapp.openSignRequest({ uuid: nftPayload.mintPayload.uuid });
+  
+      // Wait for the user to sign the mint payload
+      await this.pollSignature(nftPayload.mintPayload.uuid);
+  
+      // Poll until the balance updates
+      await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
+  
+      // Reset the form (optional if you want a visual reset)
       document.getElementById('retire-form').reset();
+  
+      this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
     } catch (error) {
       this.uiService.showError(error.message);
     }
   }
+  
+  async pollSignature(uuid) {
+    // Poll until the transaction is signed or rejected
+    let status = await this.xumm.xapp.getPayload(uuid);
+  
+    while (!status.meta.signed) {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      status = await this.xumm.xapp.getPayload(uuid);
+    }
+  
+    if (status.meta.cancelled) {
+      throw new Error('Transaction was canceled by the user.');
+    }
+  }
+  
+  
+
+
+
+
+
+
 
   async pollBalanceUpdate(originalBalance, originalxRPBalance, retries = 5, interval = 5000) {
     for (let i = 0; i < retries; i++) {

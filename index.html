@@ -81,13 +81,13 @@
           <div class="card-content">
             <h2><i class="fas fa-shopping-cart"></i> Buy</h2>
             <form id="buy-form" class="form-container">
-             
+
 
               <div class="form-group">
                 <label for="xrp-amount">Numbers of token you want to buy</label>
                 <input type="number" id="xrp-amount" step="0.000001" min="0" placeholder="Enter SUS amount" required>
               </div>
-              
+
               <div class="form-group">
                 <label for="xrp-price">Price</label>
                 <input type="number" id="xrp-price" step="0.000001" min="0" placeholder="Enter Price" required>
@@ -107,13 +107,12 @@
         <div class="card">
           <div class="card-content">
             <h2><i class="fas fa-archive"></i> Retire</h2>
+            <p class="note">Burn your SUS to get NFT</p>
+
             <form id="retire-form" class="form-container">
+              <div class="form-group"></div>
               <div class="form-group">
-                <label for="retire-amount">Token Amount</label>
-                <input type="number" id="retire-amount" step="0.01" min="0" placeholder="Enter token amount" required>
-              </div>
-              <div class="form-group">
-                <p class="note">You'll receive an NFT certificate for your contribution</p>
+                <p class="note">You'll need to sign TWICE. One for Burn and another for NFT</p>
               </div>
               <button type="submit" class="submit-button">Retire Tokens</button>
             </form>

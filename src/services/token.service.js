@@ -69,7 +69,7 @@ export class TokenService {
         throw new Error(errorResponse.message || 'Transaction failed');
       }
   
-      return await response.json(); // Return payload from the response
+      return await response.json(); 
     } catch (error) {
       console.error('Error in buyTokens:', error);
       throw new Error('Failed to send buyTokens');
@@ -78,25 +78,27 @@ export class TokenService {
 
   
 
-
-
-  async retireTokens(amount) {
+  async retireTokens(account, amountBurned, token) {
     try {
-      const response = await fetch(`${this.API_URL}/retire-tokens`, {
+      const response = await fetch(`${this.API_URL}/nfts/mintNFT`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ account, amountBurned }), 
       });
-
+  
       if (!response.ok) {
-        throw new Error('Retirement failed');
+        const errorResponse = await response.json(); 
+        console.error('Server Error:', errorResponse);
+        throw new Error(errorResponse.message || 'Transaction failed');
       }
-
-      return await response.json();
+  
+      return await response.json(); // Return payload from the response
     } catch (error) {
-      throw new Error('Failed to retire tokens');
+      console.error('Error in Minting:', error);
+      throw new Error('Failed to send retireTokens');
     }
   }
 
