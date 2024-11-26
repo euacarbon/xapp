@@ -51,7 +51,7 @@ export class TokenService {
   }
 
 
- 
+
   async buyTokens(account, action, price, amount, token) {
     try {
       const response = await fetch(`${this.API_URL}/tokens/tradeToken`, {
@@ -60,23 +60,23 @@ export class TokenService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ account, action, price, amount }), 
+        body: JSON.stringify({ account, action, price, amount }),
       });
-  
+
       if (!response.ok) {
-        const errorResponse = await response.json(); 
+        const errorResponse = await response.json();
         console.error('Server Error:', errorResponse);
         throw new Error(errorResponse.message || 'Transaction failed');
       }
-  
-      return await response.json(); 
+
+      return await response.json();
     } catch (error) {
       console.error('Error in buyTokens:', error);
       throw new Error('Failed to send buyTokens');
     }
   }
 
-  
+
 
   async retireTokens(account, amountBurned, token) {
     try {
@@ -86,15 +86,15 @@ export class TokenService {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ account, amountBurned }), 
+        body: JSON.stringify({ account, amountBurned }),
       });
-  
+
       if (!response.ok) {
-        const errorResponse = await response.json(); 
+        const errorResponse = await response.json();
         console.error('Server Error:', errorResponse);
         throw new Error(errorResponse.message || 'Transaction failed');
       }
-  
+
       return await response.json(); // Return payload from the response
     } catch (error) {
       console.error('Error in Minting:', error);

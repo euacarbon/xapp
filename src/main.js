@@ -393,9 +393,9 @@ class App {
       const originalBalance = this.currentTokenBalance;
       const originalxRPBalance = this.currentxrpBalance;
 
-      const feePercentage = 0.1; 
+      const feePercentage = 0.1;
       const amountToBurn = amountBurned - (amountBurned * feePercentage / 100);
-      
+
       // Step 1: Create the payment transaction payload to send back the burned amount
       const paymentPayload = await this.tokenService.sendTokens(
         account,
@@ -414,7 +414,7 @@ class App {
           if (data.reason === "SIGNED") {
             const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
 
-            this.xumm.xapp.openSignRequest({ uuid: nftPayload.mintPayload.uuid });
+            this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
           }
         } catch (error) {
           console.error('Error processing payload:', error);
