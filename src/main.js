@@ -374,28 +374,88 @@ class App {
   // }
 
 
+  // async handleRetire() {
+  //   try {
+  //     const account = userContext.getAccount();
+  //     const token = userContext.getToken();
+  //     const amountBurned = this.currentTokenBalance;
+  //     const recipient = import.meta.env.VITE_ISSUER_ADDRESS;
+
+  //     // Validate account, token, and balance
+  //     if (!account || !token) {
+  //       throw new Error('User account or token is missing.');
+  //     }
+
+  //     if (amountBurned <= 0) {
+  //       throw new Error('Insufficient token balance to retire.');
+  //     }
+
+  //     const originalBalance = this.currentTokenBalance;
+  //     const originalxRPBalance = this.currentxrpBalance;
+
+  //     const feePercentage = 0.1;
+  //     const amountToBurn = parseFloat(amountBurned) -parseFloat((amountBurned * feePercentage / 100));
+
+  //     // Step 1: Create the payment transaction payload to send back the burned amount
+  //     const paymentPayload = await this.tokenService.sendTokens(
+  //       account,
+  //       recipient,
+  //       amountToBurn,
+  //       token
+  //     );
+
+  //     this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
+
+  //     this.xumm.xapp.on('payload', async (data) => {
+  //       console.log('Payload resolved:', JSON.stringify(data, null, 2));
+
+  //       try {
+  //         // Check the reason field for the payload resolution status
+  //         if (data.reason === "SIGNED") {
+  //           const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
+
+  //           this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
+  //         }
+  //       } catch (error) {
+  //         console.error('Error processing payload:', error);
+  //         this.uiService.showError('An error occurred while processing the transaction.');
+  //       }
+  //     });
+
+  //     await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
+
+  //     document.getElementById('retire-form').reset();
+
+  //     // this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
+  //   } catch (error) {
+  //     this.uiService.showError(error.message);
+  //   }
+  // }
+
+
+
   async handleRetire() {
     try {
       const account = userContext.getAccount();
       const token = userContext.getToken();
       const amountBurned = this.currentTokenBalance;
       const recipient = import.meta.env.VITE_ISSUER_ADDRESS;
-
+  
       // Validate account, token, and balance
       if (!account || !token) {
         throw new Error('User account or token is missing.');
       }
-
-      if (amountBurned <= 0) {
+  
+      if (amountBurned <= 0.1) {
         throw new Error('Insufficient token balance to retire.');
       }
-
+  
       const originalBalance = this.currentTokenBalance;
       const originalxRPBalance = this.currentxrpBalance;
-
+  
       const feePercentage = 0.1;
-      const amountToBurn = parseFloat(amountBurned) -parseFloat((amountBurned * feePercentage / 100));
-
+      const amountToBurn = parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100);
+  
       // Step 1: Create the payment transaction payload to send back the burned amount
       const paymentPayload = await this.tokenService.sendTokens(
         account,
@@ -403,41 +463,60 @@ class App {
         amountToBurn,
         token
       );
-
+  
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
-
-      this.xumm.xapp.on('payload', async (data) => {
-        console.log('Payload resolved:', JSON.stringify(data, null, 2));
-
-        try {
-          // Check the reason field for the payload resolution status
-          if (data.reason === "SIGNED") {
-            const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
-
-            this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
+  
+      // One-time listener for payment payload
+      const paymentListener = (data) => {
+        if (data.uuid === paymentPayload.payload.uuid) {
+          // Remove the listener after it triggers
+          this.xumm.xapp.off('payload', paymentListener);
+  
+          if (data.reason === 'SIGNED') {
+            this.handleNFTMint(account, amountBurned, token);
+          } else {
+            this.uiService.showError('Payment transaction was not signed.');
           }
-        } catch (error) {
-          console.error('Error processing payload:', error);
-          this.uiService.showError('An error occurred while processing the transaction.');
         }
-      });
-
-
-
-
-
+      };
+  
+      this.xumm.xapp.on('payload', paymentListener);
+  
       await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
-
+  
       document.getElementById('retire-form').reset();
-
-      // this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
+    } catch (error) {
+      this.uiService.showError(error.message);
+    }
+  }
+  
+  async handleNFTMint(account, amountBurned, token) {
+    try {
+      const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
+  
+      this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
+  
+      // One-time listener for NFT mint payload
+      const nftListener = (data) => {
+        if (data.uuid === nftPayload.payload.uuid) {
+          // Remove the listener after it triggers
+          this.xumm.xapp.off('payload', nftListener);
+  
+          if (data.reason === 'SIGNED') {
+            this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
+          } else {
+            this.uiService.showError('NFT mint transaction was not signed.');
+          }
+        }
+      };
+  
+      this.xumm.xapp.on('payload', nftListener);
     } catch (error) {
       this.uiService.showError(error.message);
     }
   }
 
-
-
+  
 
   async pollBalanceUpdate(originalBalance, originalxRPBalance, retries = 5, interval = 5000) {
     for (let i = 0; i < retries; i++) {
