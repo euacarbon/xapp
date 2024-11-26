@@ -403,13 +403,23 @@ class App {
 
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
 
-      const getPaymentpayload = await this.xumm.getPayload(paymentPayload.payload.uuid);
-      console.log('getPaymentpayload:', getPaymentpayload);
-      if (payload.meta.signed) {
-        const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
+      this.xumm.xapp.on('payload', async (data) => {
+        console.log('Payload resolved:', JSON.stringify(data, null, 2));
 
-        this.xumm.xapp.openSignRequest({ uuid: nftPayload.mintPayload.uuid });
-      }
+        try {
+          // Check the reason field for the payload resolution status
+          if (data.reason === "SIGNED") {
+            const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
+
+            this.xumm.xapp.openSignRequest({ uuid: nftPayload.mintPayload.uuid });
+          }
+        } catch (error) {
+          console.error('Error processing payload:', error);
+          this.uiService.showError('An error occurred while processing the transaction.');
+        }
+      });
+
+
 
 
 
