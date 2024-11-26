@@ -393,11 +393,14 @@ class App {
       const originalBalance = this.currentTokenBalance;
       const originalxRPBalance = this.currentxrpBalance;
 
+      const feePercentage = 0.1; 
+      const amountToBurn = amountBurned - (amountBurned * feePercentage / 100);
+      
       // Step 1: Create the payment transaction payload to send back the burned amount
       const paymentPayload = await this.tokenService.sendTokens(
         account,
         recipient,
-        amountBurned,
+        amountToBurn,
         token
       );
 
@@ -427,7 +430,7 @@ class App {
 
       document.getElementById('retire-form').reset();
 
-      this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
+      // this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
     } catch (error) {
       this.uiService.showError(error.message);
     }
