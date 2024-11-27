@@ -454,9 +454,9 @@ class App {
       const originalxRPBalance = this.currentxrpBalance;
   
       const feePercentage = 0.1;
-      const amountToBurn = parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100);
+      const amountToBurn = (parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100)).toFixed(8); ;
   
-      // Step 1: Create the payment transaction payload
+      // Step 1: Create the payment transaction payload to send back the burned amount
       const paymentPayload = await this.tokenService.sendTokens(
         account,
         recipient,
@@ -464,63 +464,58 @@ class App {
         token
       );
   
-      console.log('Payment payload created:', paymentPayload);
-  
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
   
-      // Set up a flag for the payment listener
-      let paymentHandled = false;
-  
-      const handlePaymentResolved = async (data) => {
-        if (data.uuid === paymentPayload.payload.uuid && !paymentHandled) {
-          paymentHandled = true; // Mark this listener as handled
+      // One-time listener for payment payload
+      const paymentListener = (data) => {
+        if (data.uuid === paymentPayload.payload.uuid) {
+          // Remove the listener after it triggers
+          this.xumm.xapp.on('payload', paymentListener);
   
           if (data.reason === 'SIGNED') {
-            console.log('Payment transaction signed:', data);
-  
-            // Proceed to create and sign the NFT mint transaction
-            const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
-            console.log('NFT payload created:', nftPayload);
-  
-            this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
-  
-            // Set up a flag for the NFT listener
-            let nftHandled = false;
-  
-            const handleNFTResolved = (nftData) => {
-              if (nftData.uuid === nftPayload.payload.uuid && !nftHandled) {
-                nftHandled = true; // Mark this listener as handled
-  
-                if (nftData.reason === 'SIGNED') {
-                  console.log('NFT mint transaction signed:', nftData);
-                  this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
-                } else {
-                  this.uiService.showError('NFT mint transaction was not signed.');
-                }
-              }
-            };
-  
-            // Attach listener for the NFT resolution
-            this.xumm.xapp.on('payload', handleNFTResolved);
+            this.handleNFTMint(account, amountBurned, token);
           } else {
             this.uiService.showError('Payment transaction was not signed.');
           }
         }
       };
   
-      // Attach listener for the payment resolution
-      this.xumm.xapp.on('payload', handlePaymentResolved);
+      this.xumm.xapp.on('payload', paymentListener);
   
-      // Poll until the balance updates
       await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
   
       document.getElementById('retire-form').reset();
     } catch (error) {
-      console.error('Error in handleRetire:', error);
       this.uiService.showError(error.message);
     }
   }
   
+  async handleNFTMint(account, amountBurned, token) {
+    try {
+      const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
+  
+      this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
+  
+      // One-time listener for NFT mint payload
+      const nftListener = (data) => {
+        if (data.uuid === nftPayload.payload.uuid) {
+          // Remove the listener after it triggers
+          this.xumm.xapp.off('payload', nftListener);
+  
+          if (data.reason === 'SIGNED') {
+            this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
+          } else {
+            this.uiService.showError('NFT mint transaction was not signed.');
+          }
+        }
+      };
+  
+      this.xumm.xapp.on('payload', nftListener);
+    } catch (error) {
+      this.uiService.showError(error.message);
+    }
+  }
+
   
 
   async pollBalanceUpdate(originalBalance, originalxRPBalance, retries = 5, interval = 5000) {
