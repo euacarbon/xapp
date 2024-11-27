@@ -421,7 +421,7 @@ class App {
         throw new Error('User account or token is missing.');
       }
   
-      if (amountBurned <= 0) {
+      if (amountBurned <= 0.1) {
         throw new Error('Insufficient token balance to retire.');
       }
   
