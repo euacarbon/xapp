@@ -468,11 +468,12 @@ class App {
   
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
   
-      // Listener for payment resolution
+      // Set up a flag for the payment listener
+      let paymentHandled = false;
+  
       const handlePaymentResolved = async (data) => {
-        if (data.uuid === paymentPayload.payload.uuid) {
-          // Remove the listener for this event
-          this.xumm.xapp.off('payload', handlePaymentResolved);
+        if (data.uuid === paymentPayload.payload.uuid && !paymentHandled) {
+          paymentHandled = true; // Mark this listener as handled
   
           if (data.reason === 'SIGNED') {
             console.log('Payment transaction signed:', data);
@@ -483,11 +484,12 @@ class App {
   
             this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
   
-            // Listener for NFT resolution
+            // Set up a flag for the NFT listener
+            let nftHandled = false;
+  
             const handleNFTResolved = (nftData) => {
-              if (nftData.uuid === nftPayload.payload.uuid) {
-                // Remove the listener for this event
-                this.xumm.xapp.off('payload', handleNFTResolved);
+              if (nftData.uuid === nftPayload.payload.uuid && !nftHandled) {
+                nftHandled = true; // Mark this listener as handled
   
                 if (nftData.reason === 'SIGNED') {
                   console.log('NFT mint transaction signed:', nftData);
