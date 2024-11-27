@@ -11,6 +11,7 @@ class App {
     this.uiService = new UIService();
     this.xumm = new Xumm(import.meta.env.VITE_XUMM_API_KEY);
     this.currentTokenBalance = 0;
+    this.currentxrpBalance = 0;
 
     this.initializeApp();
   }
