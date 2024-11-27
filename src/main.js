@@ -145,9 +145,9 @@ class App {
 
 
       // Update UI with the fetched balances
-      document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
-      document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
-
+      document.getElementById('xrp-balance').textContent = `${parseFloat(xrpBalance).toFixed(4)} XRP`;
+      document.getElementById('token-balance').textContent = `${parseFloat(tokenBalance).toFixed(4)} Tokens`;
+      
       // this.uiService.showSuccess('Balances updated successfully!');
     } catch (error) {
       console.error('Error in updateBalances:', error.message);
@@ -175,7 +175,6 @@ class App {
       });
     });
 
-    // Currency Type Change
     const currencyTypeSelect = document.getElementById('currency-type');
     if (currencyTypeSelect) {
       currencyTypeSelect.addEventListener('change', (e) => {
@@ -446,7 +445,7 @@ class App {
         throw new Error('User account or token is missing.');
       }
   
-      if (amountBurned <= 0) {
+      if (amountBurned <= 0.1) {
         throw new Error('Insufficient token balance to retire.');
       }
   
@@ -456,7 +455,6 @@ class App {
       const feePercentage = 0.1;
       const amountToBurn = parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100);
   
-      // Step 1: Create the payment transaction payload
       const paymentPayload = await this.tokenService.sendTokens(
         account,
         recipient,
@@ -478,18 +476,16 @@ class App {
           if (data.reason === 'SIGNED') {
             console.log('Payment transaction signed:', data);
   
-            // Proceed to create and sign the NFT mint transaction
             const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
             console.log('NFT payload created:', nftPayload);
   
             this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
   
-            // Set up a flag for the NFT listener
             let nftHandled = false;
   
             const handleNFTResolved = (nftData) => {
               if (nftData.uuid === nftPayload.payload.uuid && !nftHandled) {
-                nftHandled = true; // Mark this listener as handled
+                nftHandled = true; 
   
                 if (nftData.reason === 'SIGNED') {
                   console.log('NFT mint transaction signed:', nftData);
@@ -500,7 +496,6 @@ class App {
               }
             };
   
-            // Attach listener for the NFT resolution
             this.xumm.xapp.on('payload', handleNFTResolved);
           } else {
             this.uiService.showError('Payment transaction was not signed.');
@@ -508,10 +503,8 @@ class App {
         }
       };
   
-      // Attach listener for the payment resolution
       this.xumm.xapp.on('payload', handlePaymentResolved);
   
-      // Poll until the balance updates
       await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
   
       document.getElementById('retire-form').reset();
@@ -557,8 +550,6 @@ document.addEventListener('DOMContentLoaded', () => {
     tokenNameElement.textContent = tokenName;
   }
 });
-
-
 
 
 // Initialize the app
