@@ -48,7 +48,7 @@ class App {
           // Update UI
           document.getElementById('xrp-balance').textContent = `${parseFloat(xrpBalance).toFixed(4)} XRP`;
           document.getElementById('token-balance').textContent = `${parseFloat(tokenBalance).toFixed(4)} Tokens`;
-          await this.updateBalances();
+          await this.fetchUserData();
 
         } else {
           throw new Error('Account or token not available.');
