@@ -40,9 +40,6 @@ class App {
         const token = await this.xumm.user.token;
 
         if (account && token) {
-          console.log('XUMM user account:', account);
-          console.log('XUMM user token:', token);
-
           // Store in userContext
           userContext.setAccount(account);
           userContext.setToken(token);
@@ -59,7 +56,6 @@ class App {
           throw new Error('Account or token not available.');
         }
       } catch (error) {
-        console.error('Error fetching XUMM user data:', error);
         document.getElementById('user-account').textContent = 'Failed to load account';
         document.getElementById('user-token').textContent = 'Failed to load token';
       }
@@ -71,7 +67,6 @@ class App {
     // });
 
     this.xumm.xapp.on('payload', async (data) => {
-      console.log('Payload resolved:', JSON.stringify(data, null, 2));
 
       try {
         // Check the reason field for the payload resolution status
@@ -83,7 +78,6 @@ class App {
           this.uiService.showError('Unexpected payload resolution reason.');
         }
       } catch (error) {
-        console.error('Error processing payload:', error);
         this.uiService.showError('An error occurred while processing the transaction.');
       }
     });
@@ -101,17 +95,14 @@ class App {
       const token = await this.xumm.user.token;
 
       if (account && token) {
-        console.log('XUMM user data:', account, token);
 
         // Store in userContext
         userContext.setAccount(account);
         userContext.setToken(token);
 
-        // Update UI
         document.getElementById('user-account').textContent = this.formatAddress(account);
         document.getElementById('user-token').textContent = this.formatToken(token);
 
-        // Fetch balances
         await this.updateBalances();
       } else {
         throw new Error('Account or token not available.');
@@ -125,7 +116,6 @@ class App {
 
   async updateBalances() {
     try {
-      // Show loading indicators
       document.getElementById('xrp-balance').textContent = 'Loading...';
       document.getElementById('token-balance').textContent = 'Loading...';
 
@@ -145,8 +135,9 @@ class App {
 
 
       // Update UI with the fetched balances
-      document.getElementById('xrp-balance').textContent = `${xrpBalance} XRP`;
-      document.getElementById('token-balance').textContent = `${tokenBalance} Tokens`;
+      document.getElementById('xrp-balance').textContent = `${parseFloat(xrpBalance).toFixed(4)} XRP`;
+      document.getElementById('token-balance').textContent = `${parseFloat(tokenBalance).toFixed(4)} Tokens`;
+      
 
       // this.uiService.showSuccess('Balances updated successfully!');
     } catch (error) {
@@ -234,7 +225,7 @@ class App {
 
         const formData = {
           amount,
-          price: amount * pricePerXRP, // Calculate the total price
+          price: amount * pricePerXRP, 
         };
 
         await this.handleBuy(formData);
@@ -247,7 +238,6 @@ class App {
       retireForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Call the handleRetire method directly
         await this.handleRetire();
       });
     }
@@ -270,18 +260,13 @@ class App {
         token
       );
 
-
-      console.log('Trustline payload:', payload);
-
-      // Open the Xumm sign request using the UUID from the payload
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
       // this.uiService.showSuccess(`${tokenName} trustline set. You can receive token.`);
 
       document.getElementById('enable-form').reset();
     } catch (error) {
-      // Show error message if trustline creation fails
       this.uiService.showError(error.message);
-      throw error; // Re-throw to log in the form submission catch block
+      throw error; 
     }
   }
 
@@ -345,8 +330,8 @@ class App {
       const payload = await this.tokenService.buyTokens(
         account,
         "buy", // action
-        formData.price, // Calculated price
-        formData.amount, // Entered amount
+        formData.price, 
+        formData.amount, 
         token
       );
 
@@ -362,16 +347,6 @@ class App {
   }
 
 
-  // async handleRetire(amount) {
-  //   try {
-  //     await this.tokenService.retireTokens(amount);
-  //     this.uiService.showSuccess('Tokens retired and NFT received');
-  //     await this.updateBalances();
-  //     document.getElementById('retire-form').reset();
-  //   } catch (error) {
-  //     this.uiService.showError(error.message);
-  //   }
-  // }
 
 
   // async handleRetire() {
@@ -462,10 +437,7 @@ class App {
         recipient,
         amountToBurn,
         token
-      );
-  
-      console.log('Payment payload created:', paymentPayload);
-  
+      );  
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
   
       // Set up a flag for the payment listener
@@ -476,11 +448,9 @@ class App {
           paymentHandled = true; // Mark this listener as handled
   
           if (data.reason === 'SIGNED') {
-            console.log('Payment transaction signed:', data);
   
             // Proceed to create and sign the NFT mint transaction
             const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
-            console.log('NFT payload created:', nftPayload);
   
             this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
   
@@ -492,7 +462,6 @@ class App {
                 nftHandled = true; // Mark this listener as handled
   
                 if (nftData.reason === 'SIGNED') {
-                  console.log('NFT mint transaction signed:', nftData);
                   this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
                 } else {
                   this.uiService.showError('NFT mint transaction was not signed.');
