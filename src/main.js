@@ -102,8 +102,8 @@ class App {
         userContext.setToken(token);
 
         // Update UI
-        // document.getElementById('user-account').textContent = this.formatAddress(account);
-        // document.getElementById('user-token').textContent = this.formatToken(token);
+        document.getElementById('user-account').textContent = this.formatAddress(account);
+        document.getElementById('user-token').textContent = this.formatToken(token);
 
         // Fetch balances
         await this.updateBalances();
@@ -111,7 +111,6 @@ class App {
         throw new Error('Account or token not available.');
       }
     } catch (error) {
-      console.error('Error fetching XUMM user data:', error);
       document.getElementById('user-account').textContent = 'Failed to load account';
       document.getElementById('user-token').textContent = 'Failed to load token';
     }
@@ -205,7 +204,6 @@ class App {
         const tokenName = document.getElementById('token-name').textContent.trim();
 
         try {
-          // Bind handleEnable to the current instance
           await this.handleEnable(tokenName);
         } catch (error) {
           console.error('Error enabling token:', error.message);
@@ -240,8 +238,6 @@ class App {
     if (retireForm) {
       retireForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-
-        // Call the handleRetire method directly
         await this.handleRetire();
       });
     }
@@ -267,7 +263,6 @@ class App {
 
       console.log('Trustline payload:', payload);
 
-      // Open the Xumm sign request using the UUID from the payload
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
       // this.uiService.showSuccess(`${tokenName} trustline set. You can receive token.`);
 
@@ -334,13 +329,11 @@ class App {
       const originalBalance = this.currentTokenBalance;
       const originalxRPBalance = this.currentxrpBalance;
 
-
-      // Send the trade request via TokenService
       const payload = await this.tokenService.buyTokens(
         account,
         "buy", // action
         formData.price, // Calculated price
-        formData.amount, // Entered amount
+        formData.amount, 
         token
       );
 
@@ -355,17 +348,6 @@ class App {
     }
   }
 
-
-  // async handleRetire(amount) {
-  //   try {
-  //     await this.tokenService.retireTokens(amount);
-  //     this.uiService.showSuccess('Tokens retired and NFT received');
-  //     await this.updateBalances();
-  //     document.getElementById('retire-form').reset();
-  //   } catch (error) {
-  //     this.uiService.showError(error.message);
-  //   }
-  // }
 
 
   // async handleRetire() {
