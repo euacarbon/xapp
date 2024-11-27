@@ -40,20 +40,26 @@ class App {
         const token = await this.xumm.user.token;
 
         if (account && token) {
+          console.log('XUMM user account:', account);
+          console.log('XUMM user token:', token);
 
           // Store in userContext
           userContext.setAccount(account);
           userContext.setToken(token);
 
           // Update UI
-          document.getElementById('xrp-balance').textContent = `${parseFloat(xrpBalance).toFixed(4)} XRP`;
-          document.getElementById('token-balance').textContent = `${parseFloat(tokenBalance).toFixed(4)} Tokens`;
+          document.getElementById('user-account').textContent = this.formatAddress(account);
+          document.getElementById('user-token').textContent = this.formatToken(token);
+
+          // Fetch balances
+          // await this.updateBalances();
           await this.fetchUserData();
 
         } else {
           throw new Error('Account or token not available.');
         }
       } catch (error) {
+        console.error('Error fetching XUMM user data:', error);
         document.getElementById('user-account').textContent = 'Failed to load account';
         document.getElementById('user-token').textContent = 'Failed to load token';
       }
@@ -111,6 +117,7 @@ class App {
         throw new Error('Account or token not available.');
       }
     } catch (error) {
+      console.error('Error fetching XUMM user data:', error);
       document.getElementById('user-account').textContent = 'Failed to load account';
       document.getElementById('user-token').textContent = 'Failed to load token';
     }
@@ -204,6 +211,7 @@ class App {
         const tokenName = document.getElementById('token-name').textContent.trim();
 
         try {
+          // Bind handleEnable to the current instance
           await this.handleEnable(tokenName);
         } catch (error) {
           console.error('Error enabling token:', error.message);
@@ -238,6 +246,8 @@ class App {
     if (retireForm) {
       retireForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Call the handleRetire method directly
         await this.handleRetire();
       });
     }
@@ -430,83 +440,88 @@ class App {
       const token = userContext.getToken();
       const amountBurned = this.currentTokenBalance;
       const recipient = import.meta.env.VITE_ISSUER_ADDRESS;
-
+  
       // Validate account, token, and balance
       if (!account || !token) {
         throw new Error('User account or token is missing.');
       }
-
+  
       if (amountBurned <= 0) {
         throw new Error('Insufficient token balance to retire.');
       }
-
+  
       const originalBalance = this.currentTokenBalance;
       const originalxRPBalance = this.currentxrpBalance;
-
+  
       const feePercentage = 0.1;
-      const amountToBurn = (parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100)).toFixed(8);;
-
-      // Step 1: Create the payment transaction payload to send back the burned amount
+      const amountToBurn = parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100);
+  
+      // Step 1: Create the payment transaction payload
       const paymentPayload = await this.tokenService.sendTokens(
         account,
         recipient,
         amountToBurn,
         token
       );
-
+  
+      console.log('Payment payload created:', paymentPayload);
+  
       this.xumm.xapp.openSignRequest({ uuid: paymentPayload.payload.uuid });
-
-      // One-time listener for payment payload
-      const paymentListener = (data) => {
-        if (data.uuid === paymentPayload.payload.uuid) {
-          // Remove the listener after it triggers
-          this.xumm.xapp.on('payload', paymentListener);
-
+  
+      // Set up a flag for the payment listener
+      let paymentHandled = false;
+  
+      const handlePaymentResolved = async (data) => {
+        if (data.uuid === paymentPayload.payload.uuid && !paymentHandled) {
+          paymentHandled = true; // Mark this listener as handled
+  
           if (data.reason === 'SIGNED') {
-            this.handleNFTMint(account, amountBurned, token);
+            console.log('Payment transaction signed:', data);
+  
+            // Proceed to create and sign the NFT mint transaction
+            const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
+            console.log('NFT payload created:', nftPayload);
+  
+            this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
+  
+            // Set up a flag for the NFT listener
+            let nftHandled = false;
+  
+            const handleNFTResolved = (nftData) => {
+              if (nftData.uuid === nftPayload.payload.uuid && !nftHandled) {
+                nftHandled = true; // Mark this listener as handled
+  
+                if (nftData.reason === 'SIGNED') {
+                  console.log('NFT mint transaction signed:', nftData);
+                  this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
+                } else {
+                  this.uiService.showError('NFT mint transaction was not signed.');
+                }
+              }
+            };
+  
+            // Attach listener for the NFT resolution
+            this.xumm.xapp.on('payload', handleNFTResolved);
           } else {
             this.uiService.showError('Payment transaction was not signed.');
           }
         }
       };
-
-      this.xumm.xapp.on('payload', paymentListener);
-
+  
+      // Attach listener for the payment resolution
+      this.xumm.xapp.on('payload', handlePaymentResolved);
+  
+      // Poll until the balance updates
       await this.pollBalanceUpdate(originalBalance, originalxRPBalance);
-
+  
       document.getElementById('retire-form').reset();
     } catch (error) {
+      console.error('Error in handleRetire:', error);
       this.uiService.showError(error.message);
     }
   }
-
-  async handleNFTMint(account, amountBurned, token) {
-    try {
-      const nftPayload = await this.tokenService.retireTokens(account, amountBurned, token);
-
-      this.xumm.xapp.openSignRequest({ uuid: nftPayload.payload.uuid });
-
-      // One-time listener for NFT mint payload
-      const nftListener = (data) => {
-        if (data.uuid === nftPayload.payload.uuid) {
-          // Remove the listener after it triggers
-          this.xumm.xapp.off('payload', nftListener);
-
-          if (data.reason === 'SIGNED') {
-            this.uiService.showSuccess('Tokens retired and NFT minted successfully!');
-          } else {
-            this.uiService.showError('NFT mint transaction was not signed.');
-          }
-        }
-      };
-
-      this.xumm.xapp.on('payload', nftListener);
-    } catch (error) {
-      this.uiService.showError(error.message);
-    }
-  }
-
-
+  
+  
 
   async pollBalanceUpdate(originalBalance, originalxRPBalance, retries = 5, interval = 5000) {
     for (let i = 0; i < retries; i++) {
