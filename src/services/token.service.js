@@ -40,6 +40,7 @@ export class TokenService {
         body: JSON.stringify({ sender, destination: recipient, amount }),
       });
 
+      console.log('response SEND:', response);
       if (!response.ok) {
         throw new Error('Transaction failed');
       }

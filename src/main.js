@@ -11,6 +11,7 @@ class App {
     this.uiService = new UIService();
     this.xumm = new Xumm(import.meta.env.VITE_XUMM_API_KEY);
     this.currentTokenBalance = 0;
+    this.currentxrpBalance = 0;
 
     this.initializeApp();
   }
@@ -44,10 +45,6 @@ class App {
           userContext.setAccount(account);
           userContext.setToken(token);
 
-          // Update UI
-          document.getElementById('user-account').textContent = this.formatAddress(account);
-          document.getElementById('user-token').textContent = this.formatToken(token);
-
           // Fetch balances
           // await this.updateBalances();
           await this.fetchUserData();
@@ -56,8 +53,8 @@ class App {
           throw new Error('Account or token not available.');
         }
       } catch (error) {
-        document.getElementById('user-account').textContent = 'Failed to load account';
-        document.getElementById('user-token').textContent = 'Failed to load token';
+        console.error('Error initializing XUMM:', error);
+
       }
     });
 
@@ -84,8 +81,6 @@ class App {
 
     this.xumm.on('error', (error) => {
       console.error('Xumm SDK error:', error);
-      document.getElementById('user-account').textContent = 'Error loading account';
-      document.getElementById('user-token').textContent = 'Error loading token';
     });
   }
 
@@ -99,19 +94,13 @@ class App {
         // Store in userContext
         userContext.setAccount(account);
         userContext.setToken(token);
-
-        document.getElementById('user-account').textContent = this.formatAddress(account);
-        document.getElementById('user-token').textContent = this.formatToken(token);
-
         await this.updateBalances();
       } else {
         throw new Error('Account or token not available.');
       }
     } catch (error) {
       console.error('Error fetching XUMM user data:', error);
-      document.getElementById('user-account').textContent = 'Failed to load account';
-      document.getElementById('user-token').textContent = 'Failed to load token';
-    }
+   }
   }
 
   async updateBalances() {
@@ -421,7 +410,7 @@ class App {
         throw new Error('User account or token is missing.');
       }
   
-      if (amountBurned <= 0) {
+      if (amountBurned <= 0.1) {
         throw new Error('Insufficient token balance to retire.');
       }
   
