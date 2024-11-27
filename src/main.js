@@ -446,7 +446,7 @@ class App {
         throw new Error('User account or token is missing.');
       }
   
-      if (amountBurned <= 0.1) {
+      if (amountBurned <= 0) {
         throw new Error('Insufficient token balance to retire.');
       }
   
@@ -454,7 +454,7 @@ class App {
       const originalxRPBalance = this.currentxrpBalance;
   
       const feePercentage = 0.1;
-      const amountToBurn = parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100);
+      const amountToBurn = (parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100)).toFixed(8); ;
   
       // Step 1: Create the payment transaction payload to send back the burned amount
       const paymentPayload = await this.tokenService.sendTokens(
