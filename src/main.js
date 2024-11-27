@@ -119,8 +119,8 @@ class App {
       const xrpBalance = await this.walletService.getXRPBalance(account, token);
       const tokenBalance = await this.tokenService.getTokenBalance(account, token);
 
-      this.currentTokenBalance = tokenBalance;
-      this.currentxrpBalance = xrpBalance;
+      this.currentTokenBalance = tokenBalance.toFixed(8);
+      this.currentxrpBalance = xrpBalance.toFixed(8);
 
 
       // Update UI with the fetched balances
