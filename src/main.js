@@ -263,6 +263,7 @@ class App {
 
       console.log('Trustline payload:', payload);
 
+      // Open the Xumm sign request using the UUID from the payload
       this.xumm.xapp.openSignRequest({ uuid: payload.payload.uuid });
       // this.uiService.showSuccess(`${tokenName} trustline set. You can receive token.`);
 
@@ -329,11 +330,13 @@ class App {
       const originalBalance = this.currentTokenBalance;
       const originalxRPBalance = this.currentxrpBalance;
 
+
+      // Send the trade request via TokenService
       const payload = await this.tokenService.buyTokens(
         account,
         "buy", // action
         formData.price, // Calculated price
-        formData.amount, 
+        formData.amount, // Entered amount
         token
       );
 
@@ -349,7 +352,16 @@ class App {
   }
 
 
-  
+  // async handleRetire(amount) {
+  //   try {
+  //     await this.tokenService.retireTokens(amount);
+  //     this.uiService.showSuccess('Tokens retired and NFT received');
+  //     await this.updateBalances();
+  //     document.getElementById('retire-form').reset();
+  //   } catch (error) {
+  //     this.uiService.showError(error.message);
+  //   }
+  // }
 
 
   // async handleRetire() {

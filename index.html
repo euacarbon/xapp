@@ -81,13 +81,13 @@
           <div class="card-content">
             <h2><i class="fas fa-shopping-cart"></i> Buy</h2>
             <form id="buy-form" class="form-container">
-
+             
 
               <div class="form-group">
                 <label for="xrp-amount">Numbers of token you want to buy</label>
                 <input type="number" id="xrp-amount" step="0.000001" min="0" placeholder="Enter SUS amount" required>
               </div>
-
+              
               <div class="form-group">
                 <label for="xrp-price">Price</label>
                 <input type="number" id="xrp-price" step="0.000001" min="0" placeholder="Enter Price" required>
@@ -110,7 +110,8 @@
             <p class="note">Burn your SUS to get NFT</p>
 
             <form id="retire-form" class="form-container">
-              <div class="form-group"></div>
+              <div class="form-group">
+              </div>
               <div class="form-group">
                 <p class="note">You'll need to sign TWICE. One for Burn and another for NFT</p>
               </div>
@@ -124,7 +125,7 @@
       <section id="enable-section" class="section">
         <div class="card">
           <div class="card-content">
-            <h2><i class="fas fa-link"></i> Enable <span id="token-name">Token</span> For Wallet</h2>
+            <h2><i class="fas fa-link"></i> Enable <span id="token-name">Token</span> For This Wallet</h2>
             <p class="sub-heading">You will be required to sign the transaction to enable the token for your wallet
               address.</p>
             <form id="enable-form" class="form-container">
@@ -154,7 +155,6 @@
         </div>
       </div>
     </footer>
-    
   </div>
   <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
   <script type="module" src="/src/main.js"></script>
