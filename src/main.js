@@ -206,7 +206,6 @@ class App {
         e.preventDefault();
 
         const amount = parseFloat(document.getElementById('token-amount').value);
-        // const pricePerXRP = parseFloat(document.getElementById('xrp-price').value);
 
         if (isNaN(amount)  || amount <= 0  <= 0) {
           return this.uiService.showError('Invalid input for amount or price.');
