@@ -76,31 +76,26 @@
       </section>
 
       <!-- Buy Section -->
+      <!-- Buy Section -->
       <section id="buy-section" class="section">
         <div class="card">
           <div class="card-content">
             <h2><i class="fas fa-shopping-cart"></i> Buy</h2>
             <form id="buy-form" class="form-container">
-
-
               <div class="form-group">
-                <label for="xrp-amount">Numbers of token you want to buy</label>
-                <input type="number" id="xrp-amount" step="0.000001" min="0" placeholder="Enter SUS amount" required>
+                <label for="token-amount">Number of Tokens</label>
+                <input type="number" id="token-amount" step="1" min="1" placeholder="Enter SUS amount" required>
               </div>
 
               <div class="form-group">
-                <label for="xrp-price">Price</label>
-                <input type="number" id="xrp-price" step="0.000001" min="0" placeholder="Enter Price" required>
-              </div>
-
-              <div class="form-group">
-                <!-- <p id="token-estimate" class="note">Estimated tokens: 0</p> -->
+                <p id="xrp-required" class="note">You need approximately: 0 XRP</p>
               </div>
               <button type="submit" class="submit-button">Buy Tokens</button>
             </form>
           </div>
         </div>
       </section>
+
 
       <!-- Retire Section -->
       <section id="retire-section" class="section">
@@ -140,10 +135,36 @@
 
     </main>
 
-    
+
   </div>
   <script src="https://xumm.app/assets/cdn/xumm.min.js"></script>
   <script type="module" src="/src/main.js"></script>
+  <script>
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const tokenAmountInput = document.getElementById("token-amount");
+      const xrpRequiredOutput = document.getElementById("xrp-required");
+
+      const pricePerToken = 1; // 1 SUS = 1 XRP
+      const slippageTolerance = 1; // Hardcoded slippage tolerance of 1%
+
+      function calculateXRP() {
+        const tokenAmount = parseFloat(tokenAmountInput.value) || 0;
+
+        // Calculate XRP required with slippage
+        let xrpRequired = tokenAmount * pricePerToken;
+        const slippageAmount = (xrpRequired * slippageTolerance) / 100;
+        xrpRequired += slippageAmount;
+
+        xrpRequiredOutput.textContent = `You need: ${xrpRequired.toFixed(2)} XRP`;
+      }
+
+      // Event listener for live calculation
+      tokenAmountInput.addEventListener("input", calculateXRP);
+    });
+
+
+  </script>
 </body>
 
 </html>

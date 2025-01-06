@@ -205,16 +205,16 @@ class App {
       buyForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const amount = parseFloat(document.getElementById('xrp-amount').value);
-        const pricePerXRP = parseFloat(document.getElementById('xrp-price').value);
+        const amount = parseFloat(document.getElementById('token-amount').value);
+        // const pricePerXRP = parseFloat(document.getElementById('xrp-price').value);
 
-        if (isNaN(amount) || isNaN(pricePerXRP) || amount <= 0 || pricePerXRP <= 0) {
+        if (isNaN(amount)  || amount <= 0  <= 0) {
           return this.uiService.showError('Invalid input for amount or price.');
         }
 
         const formData = {
           amount,
-          price: amount * pricePerXRP, 
+          price: amount 
         };
 
         await this.handleBuy(formData);
@@ -419,6 +419,8 @@ class App {
   
       const feePercentage = 0.1;
       const amountToBurn = parseFloat(amountBurned) - parseFloat((amountBurned * feePercentage) / 100);
+
+      console.log('amountToBurn:', amountToBurn); 
   
       // Step 1: Create the payment transaction payload
       const paymentPayload = await this.tokenService.sendTokens(
