@@ -207,7 +207,7 @@ class App {
 
         const amount = parseFloat(document.getElementById('token-amount').value);
 
-        if (isNaN(amount)  || amount <= 0  <= 0) {
+        if (isNaN(amount)  || amount <= 0 ) {
           return this.uiService.showError('Invalid input for amount or price.');
         }
 
